@@ -1,58 +1,52 @@
-name: coffeeshop
+version: "3.9"
 
 services:
-  mysql:
-    image: mysql:8
-    container_name: mysql
-    restart: always
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_DATABASE: coffeeshop
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    volumes:
-      - mysql-data:/var/lib/mysql
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "127.0.0.1",
-          "-p${MYSQL_ROOT_PASSWORD}",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 15
-      start_period: 60s
-    command: >
-      --innodb-buffer-pool-size=64M
-      --max_connections=50
-      --performance_schema=OFF
-
   backend:
-    image: ${DH_USER}/coffeeshop-backend:latest
+    image: your_user/coffeeshop-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: coffeeshop-backend
-    depends_on:
-      mysql:
-        condition: service_healthy
-    restart: unless-stopped
     ports:
-      - "8099:8099"
-    env_file:
-      - .env
+      - "8089:8089"
     environment:
-      SERVER_ADDRESS: "0.0.0.0"
-      SERVER_PORT: "8099"
-      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx512m -XX:+UseSerialGC"
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/coffeeshop?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
-      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
-      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "2"
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/coffeeshop?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=123456
+    depends_on:
+      - mysql
+    networks:
+      - coffeeshop-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: coffeeshop-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - coffeeshop-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: coffeeshop-mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_DATABASE=coffeeshop
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - coffeeshop-network
+
+networks:
+  coffeeshop-network:
 
 volumes:
-  mysql-data:
+  mysql_data:
