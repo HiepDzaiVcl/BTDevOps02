@@ -60,10 +60,10 @@ jobs:
               mkdir -p "$HOME"
               cd "$HOME"
               # Repo phải dùng URL SSH: git@github.com:<user>/<repo>.git
-              git clone git@github.com:LongIT2007/coffeeshop.git
-              cd coffeeshop
+              git clone https://github.com/HiepDzaiVcl/BTDevOps02.git
+              cd BTDevOps02
             else
-              cd "$HOME/coffeeshop"
+              cd "$HOME/BTDevOps02"
             fi
 
             git fetch --all
