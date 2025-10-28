@@ -2,9 +2,9 @@ version: "3.9"
 
 services:
   backend:
-    image: your_user/coffeeshop-backend
+    image: coffeeshop-backend
     build:
-      context: ./backend
+      context: ./Backend
       dockerfile: Dockerfile
     container_name: coffeeshop-backend
     ports:
@@ -21,7 +21,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./Frontend
       dockerfile: Dockerfile
     container_name: coffeeshop-frontend
     ports:
