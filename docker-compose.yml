@@ -1,0 +1,58 @@
+name: coffeeshop
+
+services:
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: coffeeshop
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "127.0.0.1",
+          "-p${MYSQL_ROOT_PASSWORD}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
+    command: >
+      --innodb-buffer-pool-size=64M
+      --max_connections=50
+      --performance_schema=OFF
+
+  backend:
+    image: ${DH_USER}/coffeeshop-backend:latest
+    container_name: coffeeshop-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "8099:8099"
+    env_file:
+      - .env
+    environment:
+      SERVER_ADDRESS: "0.0.0.0"
+      SERVER_PORT: "8099"
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx512m -XX:+UseSerialGC"
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/coffeeshop?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "2"
+
+volumes:
+  mysql-data:
